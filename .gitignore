@@ -1,0 +1,7 @@
+*.test
+*.out
+
+# Local dev workspace overrides (never committed)
+go.work
+go.work.sum
+

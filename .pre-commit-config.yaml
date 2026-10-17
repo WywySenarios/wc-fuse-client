@@ -1,0 +1,18 @@
+repos:
+  - repo: local
+    hooks:
+      - id: gofmt
+        name: gofmt
+        entry: ./scripts/tests/gofmt
+        language: system
+        pass_filenames: false
+      - id: shell-parse
+        name: shell_parse
+        entry: ./scripts/tests/shell_parse
+        language: system
+        pass_filenames: false
+      - id: go-test
+        name: go_test
+        entry: ./scripts/tests/go_test
+        language: system
+        pass_filenames: false
