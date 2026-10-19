@@ -1,11 +1,10 @@
 # wc-fuse-client
 
-The in-pod half of wc-fuse: the control-socket wire protocol and the client
-the harness embeds to request and release per-project workspace mounts.
+This repo is part of the Wywy repo line and is subject to Wywy conventions.
 
-It is split out of the host-side `wc-fuse` repo so the pod's dependency graph
-stays small — this module depends only on `wc-log`, never on FUSE or host
-provisioning code.
+The in-pod half of wc-fuse: the control-socket wire protocol and the client the harness embeds to request and release per-project workspace mounts.
+
+It is split out of the host-side `wc-fuse` repo so the pod's dependency graph stays small — this module depends only on `wc-log`, never on FUSE or host provisioning code.
 
 ## Contents
 
@@ -23,13 +22,13 @@ mountPoint, err := c.Mount(sessionID, projectRoot)
 err = c.Unmount(projectRoot)
 ```
 
-Requests carry no policy: they name only a session and a project root. The host
-daemon authorizes them against the host-side project-roots allowlist.
+Requests carry no policy: they name only a session and a project root. The host daemon authorizes them against the host-side project-roots allowlist.
 
 ## Consuming
 
-Consumed by the harness (in-pod) and by the `wc-fuse` daemon (host), both by
-module path. Development:
+Consumed by the harness (in-pod) and by the `wc-fuse` daemon (host), both by module path.
+
+## Development
 
 ```sh
 go test ./...

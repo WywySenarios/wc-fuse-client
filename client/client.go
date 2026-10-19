@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/WywySenarios/wc-fuse-client/protocol"
+	"github.com/WywySenarios/wc-fuse/protocol"
 	wclog "github.com/WywySenarios/wc-log/log"
 )
 
@@ -73,7 +73,7 @@ func (c *Client) do(req protocol.Request) (*protocol.Response, error) {
 		return nil, fmt.Errorf("wc-fuse client: read %s response: %w", req.Op, err)
 	}
 	if !resp.OK {
-		return nil, fmt.Errorf("wc-fuse: %s: %s", resp.Code, resp.Error)
+		return nil, &protocol.Error{Code: resp.Code, Message: resp.Error}
 	}
 	return &resp, nil
 }

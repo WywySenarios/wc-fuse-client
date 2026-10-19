@@ -2,6 +2,7 @@ package client_test
 
 import (
 	"encoding/json"
+	"errors"
 	"net"
 	"os"
 	"path/filepath"
@@ -9,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/WywySenarios/wc-fuse-client/client"
-	"github.com/WywySenarios/wc-fuse-client/protocol"
+	"github.com/WywySenarios/wc-fuse/protocol"
 )
 
 // fakeDaemon speaks the control protocol over a unix socket. It stands
@@ -117,5 +118,22 @@ func TestClientRefusesDisallowedRoot(t *testing.T) {
 
 	if _, err := c.Mount("s1", "/etc"); err == nil {
 		t.Fatal("Mount of a root outside the allowlist must fail")
+	}
+}
+
+func TestClientDaemonErrorIsTyped(t *testing.T) {
+	socket := newFakeDaemon(t, "/home/eric/src")
+	c := client.New(socket, nil)
+
+	_, err := c.Mount("s1", "/etc")
+	if err == nil {
+		t.Fatal("Mount of a root outside the allowlist must fail")
+	}
+	var perr *protocol.Error
+	if !errors.As(err, &perr) {
+		t.Fatalf("error is %T, want *protocol.Error", err)
+	}
+	if perr.Code != protocol.CodeDenied {
+		t.Errorf("code = %q, want %q", perr.Code, protocol.CodeDenied)
 	}
 }
