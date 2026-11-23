@@ -1,3 +1,5 @@
+github.com/WywySenarios/wc-fuse v0.0.0-20261019005228-668301ae41c0 h1:gUxPIx95x3FsQzlAdDD6CE8LTYvwaLZc/joZ68Rrw7o=
+github.com/WywySenarios/wc-fuse v0.0.0-20261019005228-668301ae41c0/go.mod h1:9y2w1Il+aN6IPZ8mtgwSSFmS3tNkwyCborNIjFzNivE=
 github.com/WywySenarios/wc-log v0.0.0-20261015214859-feab0a60cdd1 h1:OguVgvuYtnC4LDu5UbRvb/WZ5zrZuGi6/ch3Hd9GfHE=
 github.com/WywySenarios/wc-log v0.0.0-20261015214859-feab0a60cdd1/go.mod h1:pX9G7Ih64ArzH6GJ1ESSrLb9LOb7eVwaEnH08YozhY4=
 github.com/cenkalti/backoff/v5 v5.0.3 h1:ZN+IMa753KfX5hd8vVaMixjnqRZ3y8CuJKRKj1xcsSM=
