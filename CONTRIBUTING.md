@@ -18,4 +18,4 @@ It is highly advised to run tests before making modifications to set a baseline.
 
 ## Consuming contract
 
-The host `wc-fuse` module and the harness consume this module by module path (GOPROXY at a published tag). `wc-log` is consumed the same way.
+The host `wc-fuse` module and in-pod consumers use this module by module path (GOPROXY at a published tag). `wc-log` is consumed the same way.

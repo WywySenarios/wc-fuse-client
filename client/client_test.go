@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/WywySenarios/wc-fuse-client/client"
@@ -17,11 +18,15 @@ import (
 // in for the host daemon so this module's tests do not depend on the
 // wc-fuse (host) module.
 type fakeDaemon struct {
+	mu sync.Mutex
+
 	allow []string
 	open  int
+
+	lastUnmountSession string
 }
 
-func newFakeDaemon(t *testing.T, allow ...string) string {
+func newFakeDaemon(t *testing.T, allow ...string) (*fakeDaemon, string) {
 	t.Helper()
 	socket := filepath.Join(t.TempDir(), "ctl", "wc-fuse.sock")
 	if err := os.MkdirAll(filepath.Dir(socket), 0o711); err != nil {
@@ -42,7 +47,7 @@ func newFakeDaemon(t *testing.T, allow ...string) string {
 		}
 	}()
 	t.Cleanup(func() { _ = ln.Close() })
-	return socket
+	return d, socket
 }
 
 func (d *fakeDaemon) serve(conn net.Conn) {
@@ -60,16 +65,26 @@ func (d *fakeDaemon) serve(conn net.Conn) {
 			if !d.allowed(req.ProjectRoot) {
 				resp = protocol.Response{Code: protocol.CodeDenied, Error: "not allowed"}
 			} else {
+				d.mu.Lock()
 				d.open++
-				resp = protocol.Response{OK: true, MountPoint: "/dev/wc/workspace/x", OpenMounts: d.open}
+				open := d.open
+				d.mu.Unlock()
+				resp = protocol.Response{OK: true, MountPoint: "/dev/wc/workspace/x", OpenMounts: open}
 			}
 		case protocol.OpUnmount:
+			d.mu.Lock()
 			if d.open > 0 {
 				d.open--
 			}
-			resp = protocol.Response{OK: true, OpenMounts: d.open}
+			d.lastUnmountSession = req.SessionID
+			open := d.open
+			d.mu.Unlock()
+			resp = protocol.Response{OK: true, OpenMounts: open}
 		case protocol.OpStatus:
-			resp = protocol.Response{OK: true, OpenMounts: d.open}
+			d.mu.Lock()
+			open := d.open
+			d.mu.Unlock()
+			resp = protocol.Response{OK: true, OpenMounts: open}
 		default:
 			resp = protocol.Response{Code: protocol.CodeBadRequest, Error: "unknown op"}
 		}
@@ -88,11 +103,17 @@ func (d *fakeDaemon) allowed(root string) bool {
 	return false
 }
 
+func (d *fakeDaemon) unmountSession() string {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.lastUnmountSession
+}
+
 func TestClientRoundTrip(t *testing.T) {
-	socket := newFakeDaemon(t, "/home/eric/src")
+	d, socket := newFakeDaemon(t, "/srv/wc/projects")
 	c := client.New(socket, nil)
 
-	mp, err := c.Mount("s1", "/home/eric/src/proj")
+	mp, err := c.Mount("s1", "/srv/wc/projects/proj")
 	if err != nil {
 		t.Fatalf("Mount: %v", err)
 	}
@@ -104,8 +125,11 @@ func TestClientRoundTrip(t *testing.T) {
 		t.Errorf("Status = %d, %v; want 1, nil", n, err)
 	}
 
-	if err := c.Unmount("/home/eric/src/proj"); err != nil {
+	if err := c.Unmount("s1", "/srv/wc/projects/proj"); err != nil {
 		t.Fatalf("Unmount: %v", err)
+	}
+	if got := d.unmountSession(); got != "s1" {
+		t.Errorf("unmount session = %q, want %q", got, "s1")
 	}
 	if n, err := c.Status(); err != nil || n != 0 {
 		t.Errorf("Status after unmount = %d, %v; want 0, nil", n, err)
@@ -113,7 +137,7 @@ func TestClientRoundTrip(t *testing.T) {
 }
 
 func TestClientRefusesDisallowedRoot(t *testing.T) {
-	socket := newFakeDaemon(t, "/home/eric/src")
+	_, socket := newFakeDaemon(t, "/srv/wc/projects")
 	c := client.New(socket, nil)
 
 	if _, err := c.Mount("s1", "/etc"); err == nil {
@@ -122,7 +146,7 @@ func TestClientRefusesDisallowedRoot(t *testing.T) {
 }
 
 func TestClientDaemonErrorIsTyped(t *testing.T) {
-	socket := newFakeDaemon(t, "/home/eric/src")
+	_, socket := newFakeDaemon(t, "/srv/wc/projects")
 	c := client.New(socket, nil)
 
 	_, err := c.Mount("s1", "/etc")

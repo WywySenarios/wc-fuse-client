@@ -2,9 +2,9 @@
 
 This repo is part of the Wywy repo line and is subject to Wywy conventions.
 
-The in-pod half of wc-fuse: the control-socket wire protocol and the client the harness embeds to request and release per-project workspace mounts.
+The in-pod client and wire protocol for wc-fuse: the control-socket messages and the client in-pod workloads embed to request and release per-project workspace mounts.
 
-It is split out of the host-side `wc-fuse` repo so the pod's dependency graph stays small — this module depends only on `wc-log`, never on FUSE or host provisioning code.
+This repository is separate from the host-side `wc-fuse` repo so the pod's dependency graph stays small — it depends only on `wc-log`, never on FUSE or host provisioning code.
 
 ## Contents
 
@@ -19,14 +19,16 @@ import "github.com/WywySenarios/wc-fuse-client/client"
 c := client.New("/dev/wc/control/wc-fuse.sock", logger)
 mountPoint, err := c.Mount(sessionID, projectRoot)
 // ... use the workspace at mountPoint ...
-err = c.Unmount(projectRoot)
+err = c.Unmount(sessionID, projectRoot) // sessionID must be the one used for Mount
 ```
+
+The `sessionID` passed to `Unmount` must match the one used for `Mount`.
 
 Requests carry no policy: they name only a session and a project root. The host daemon authorizes them against the host-side project-roots allowlist.
 
 ## Consuming
 
-Consumed by the harness (in-pod) and by the `wc-fuse` daemon (host), both by module path.
+Consumed by in-pod workloads and by the `wc-fuse` daemon (host), both by module path.
 
 ## Development
 

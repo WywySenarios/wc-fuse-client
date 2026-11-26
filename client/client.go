@@ -36,13 +36,17 @@ func (c *Client) Mount(sessionID, projectRoot string) (string, error) {
 	return resp.MountPoint, nil
 }
 
-// Unmount releases projectRoot's workspace mount.
-func (c *Client) Unmount(projectRoot string) error {
-	_, err := c.do(protocol.Request{Op: protocol.OpUnmount, ProjectRoot: projectRoot})
+// Unmount releases sessionID's hold on projectRoot's workspace mount.
+func (c *Client) Unmount(sessionID, projectRoot string) error {
+	_, err := c.do(protocol.Request{
+		Op:          protocol.OpUnmount,
+		SessionID:   sessionID,
+		ProjectRoot: projectRoot,
+	})
 	if err != nil {
 		return err
 	}
-	c.log("wc-fuse: unmounted %s", projectRoot)
+	c.log("wc-fuse: unmounted %s for session %s", projectRoot, sessionID)
 	return nil
 }
 
